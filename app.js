@@ -47,13 +47,13 @@
                 var rowClassName = rowUniqueClassNameGenerator();
 
                 element = createElement();
-                addClass(element, rowClassName + 'vertical display-table-row debug');
+                addClass(element, rowClassName + 'vertical display-table-row');
                 break;
             case 'cell':
                 var cellClassName = cellUniqueClassNameGenerator();
 
                 element = createElement();
-                addClass(element, cellClassName + 'display-table-cell horizontal debug');
+                addClass(element, cellClassName + 'display-table-cell horizontal');
                 break;
             case 'field':
                 element = createElement();
