@@ -3,7 +3,6 @@
 
     document.addEventListener('DOMContentLoaded', tetris.initialize.bind(tetris));
 }(this, function() {
-
     function generateUniqueClassName(element) {
         var rowCounter = 0,
             cellCounter = 0,
@@ -86,14 +85,47 @@
             var self = this;
 
             document.addEventListener('keydown', function(e) {
+                var direction = '';
+
                 switch (e.keyCode) {
                     case 37:
-                        self.moveLeft();
+                        direction = 'left';
                         break;
                     case 39:
-                        self.moveRight();
+                        direction = 'right';
+                        break;
+                    case 40:
+                        direction = 'down';
                         break;
                 }
+
+                self.changeDirection(direction);
+            });
+        },
+        changeDirection: function (direction) {
+            var self = this,
+                coordinatesShift = 0;
+
+            self.clearField();
+
+            switch (direction) {
+                case 'left':
+                    coordinatesShift = -1;
+                    break;
+                case 'right':
+                    coordinatesShift = 1;
+                    break;
+                case 'down':
+                    coordinatesShift = self.verticalSize;
+                    break;
+            }
+
+            self.figureCoordinates = self.figureCoordinates.map(function(point) {
+                return point + coordinatesShift;
+            });
+
+            self.figureCoordinates.forEach(function(point) {
+                self.activateCell('g' + point);
             });
         },
         showFigure: function () {
@@ -101,7 +133,7 @@
                 figure = self.generateFigure();
 
             self.drawFigure(figure);
-            self.moveDown();
+            self.moveFigure();
         },
         generateField: function (vSize, hSize) {
             var verticalSize = vSize || this.verticalSize,
@@ -147,55 +179,21 @@
                 self.activateCell('g' + point);
             })
         },
-        moveLeft: function () {
-            var self = this;
-
-            self.clearField();
-
-            self.figureCoordinates = self.figureCoordinates.map(function(point) {
-                return point - 1;
-            });
-
-            self.figureCoordinates.forEach(function(point) {
-                self.activateCell('g' + point);
-            });
-        },
-        moveRight: function () {
-            var self = this;
-
-            self.clearField();
-
-            self.figureCoordinates = self.figureCoordinates.map(function(point) {
-                return point + 1;
-            });
-
-            self.figureCoordinates.forEach(function(point) {
-                self.activateCell('g' + point);
-            });
-        },
-        moveDown: function () {
+        moveFigure: function () {
             var self = this;
 
             var moveInterval = setInterval(function() {
-                self.clearField();
-
-                self.figureCoordinates = self.figureCoordinates.map(function(point) {
-                    return point + self.verticalSize;
-                });
-
-                self.figureCoordinates.forEach(function(point) {
-                    self.activateCell('g' + point);
-                });
+                self.changeDirection('down');
 
                 var maxCoordinate = self.verticalSize * self.horizontalSize,
                     lastCoordinate = self.figureCoordinates[self.figureCoordinates.length -1];
 
-                if (lastCoordinate + 20 > maxCoordinate) {
+                if (lastCoordinate + self.verticalSize > maxCoordinate) {
                     clearInterval(moveInterval);
                     self.figureCoordinates = [];
                     self.showFigure();
                 }
-            }, 300);
+            }, 1000);
         },
         clearField: function () {
             var cells = document.getElementsByClassName('horizontal'),
