@@ -1,0 +1,13 @@
+.tetris .field {
+    width: 400px;
+    height: 800px;
+}
+
+.active {
+    background: grey;
+}
+
+.debug {
+    outline: 1px solid red;
+}
+
