@@ -106,7 +106,8 @@
             var self = this,
                 coordinatesShift = 0;
 
-            self.clearField();
+            //self.clearField();
+            self.clear();
 
             switch (direction) {
                 case 'left':
@@ -188,12 +189,34 @@
                 var maxCoordinate = self.verticalSize * self.horizontalSize,
                     lastCoordinate = self.figureCoordinates[self.figureCoordinates.length -1];
 
-                if (lastCoordinate + self.verticalSize > maxCoordinate) {
+                /*self.figureCoordinates.forEach(function(point) {
+                    var nextPoint = document.getElementsByClassName('g' + (point + self.verticalSize))[0];
+                    var nextPointClasses = nextPoint ? nextPoint.className : '';
+
+                    console.log(nextPointClasses.indexOf('active'));
+
+                    if (nextPointClasses.indexOf('active') !== -1) {
+                        clearInterval(moveInterval);
+                        self.figureCoordinates = [];
+                        self.showFigure();
+                    }
+                });*/
+
+                if ((lastCoordinate + self.verticalSize > maxCoordinate)) {
                     clearInterval(moveInterval);
                     self.figureCoordinates = [];
                     self.showFigure();
                 }
             }, 1000);
+        },
+        clear: function() {
+            var self = this;
+
+            self.figureCoordinates.forEach(function(point) {
+                var cell = document.getElementsByClassName('g' + point)[0];
+
+                cell.className = cell.className.replace(/\bactive\b/, '');
+            });
         },
         clearField: function () {
             var cells = document.getElementsByClassName('horizontal'),
