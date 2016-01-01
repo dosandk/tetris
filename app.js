@@ -108,21 +108,21 @@
         moveFigure: function (direction) {
             var self = this;
             var coordinatesShift = 0;
-            var currentCoord = [];
+            var nextCoordinates = [];
 
             function riba() {
                 for (var i = 0; i < self.figureCoordinates.length; i++) {
-                    currentCoord.push(self.figureCoordinates[i] + coordinatesShift);
+                    nextCoordinates.push(self.figureCoordinates[i] + coordinatesShift);
                 }
             }
 
             function foo() {
-                self.clear(currentCoord, coordinatesShift);
+                self.clear();
 
-                currentCoord.forEach(function(point) {
+                nextCoordinates.forEach(function(point) {
                     self.activateCell('g' + point);
                     self.figureCoordinates = [];
-                    self.figureCoordinates = currentCoord;
+                    self.figureCoordinates = nextCoordinates;
                 });
             }
 
@@ -130,21 +130,21 @@
                 case 'left':
                     coordinatesShift = -1;
                     riba();
-                    if (!self.isNextCellActive(currentCoord) && self.isLeftSideCellExist(currentCoord)) {
+                    if (!self.isNextCellActive(nextCoordinates) && self.isLeftSideCellExist(nextCoordinates)) {
                         foo();
                     }
                     break;
                 case 'right':
                     coordinatesShift = 1;
                     riba();
-                    if (!self.isNextCellActive(currentCoord) && self.isRightSideCellExist(currentCoord)) {
+                    if (!self.isNextCellActive(nextCoordinates) && self.isRightSideCellExist(nextCoordinates)) {
                         foo();
                     }
                     break;
                 case 'down':
                     coordinatesShift = self.verticalSize;
                     riba();
-                    if (!self.isNextCellActive(currentCoord) && self.isNextCellExist(currentCoord)) {
+                    if (!self.isNextCellActive(nextCoordinates) && self.isNextCellExist(nextCoordinates)) {
                         foo();
                     }
                     else {
@@ -153,13 +153,13 @@
                     break;
             }
         },
-        isNextCellActive: function(currentCoord) {
+        isNextCellActive: function(nextCoordinates) {
             var self = this,
                 result = false,
-                index = currentCoord.length;
+                index = nextCoordinates.length;
 
             while (index--) {
-                if (self.activeCoordinates.indexOf(currentCoord[index]) !== -1) {
+                if (self.activeCoordinates.indexOf(nextCoordinates[index]) !== -1) {
                     result = true;
                     break;
                 }
@@ -167,16 +167,37 @@
 
             return result;
         },
-        isLeftSideCellExist: function (currentCoord) {
+        isLeftSideCellExist: function (nextCoordinates) {
             var self = this,
                 result = true,
-                index = currentCoord.length;
+                index = nextCoordinates.length;
 
             while (index--) {
-                var position = currentCoord[index] % self.verticalSize;
-                var leftMax = currentCoord[index] - position;
+                var position = nextCoordinates[index] % self.verticalSize;
+                var leftMax = nextCoordinates[index] - position;
 
-                if (currentCoord[index] <= leftMax) {
+                console.log('leftMax', leftMax);
+                console.log('nextCoordinates[index]', nextCoordinates[index]);
+
+                if (nextCoordinates[index] <= leftMax) {
+                    result = false;
+                    break;
+                }
+            }
+            console.error('=======');
+
+            return result;
+        },
+        isRightSideCellExist: function (nextCoordinates) {
+            var self = this,
+                result = true,
+                index = nextCoordinates.length;
+
+            while (index--) {
+                var position = nextCoordinates[index] % self.verticalSize;
+                var rightMax = nextCoordinates[index] + self.verticalSize - position - 1;
+
+                if (nextCoordinates[index] >= rightMax) {
                     result = false;
                     break;
                 }
@@ -184,32 +205,14 @@
 
             return result;
         },
-        isRightSideCellExist: function (currentCoord) {
-            var self = this,
-                result = true,
-                index = currentCoord.length;
-
-            while (index--) {
-                var position = currentCoord[index] % self.verticalSize;
-                var rightMax = currentCoord[index] + self.verticalSize - position - 1;
-
-                if ( currentCoord[index] >= rightMax) {
-                    result = false;
-                    break;
-                }
-            }
-
-            return result;
-        },
-        isNextCellExist: function (currentCoord) {
+        isNextCellExist: function (nextCoordinates) {
             var self = this,
                 result = true,
                 downMax = self.maxCoordinate,
-                index = currentCoord.length;
+                index = nextCoordinates.length;
 
             while (index--) {
-
-                if (currentCoord[index] > downMax) {
+                if (nextCoordinates[index] > downMax) {
                     result = false;
                     break;
                 }
@@ -217,11 +220,11 @@
 
             return result;
         },
-        clear: function(coordinates, coordinatesShift) {
+        clear: function() {
             var self = this;
 
-            coordinates.forEach(function(point) {
-                var cell = document.getElementsByClassName('g' + (point - coordinatesShift))[0];
+            self.figureCoordinates.forEach(function(point) {
+                var cell = document.getElementsByClassName('g' + point)[0];
 
                 if (typeof cell !== 'undefined') {
                     cell.className = cell.className.replace(/\bactive\b/, '');
