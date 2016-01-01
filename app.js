@@ -86,10 +86,11 @@
             self.showFigure();
         },
         initListeners: function () {
-            var self = this,
-                direction = '';
+            var self = this;
 
             document.addEventListener('keydown', function(e) {
+                var direction = '';
+
                 switch (e.keyCode) {
                     case 37:
                         direction = 'left';
