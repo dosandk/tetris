@@ -70,9 +70,13 @@
     return {
         verticalSize: 20,
         horizontalSize: 40,
+        maxCoordinate: 0,
+        activeCoordinates: [],
         figureCoordinates: [],
         initialize: function () {
             var self = this;
+
+            self.maxCoordinate = this.verticalSize * this.horizontalSize;
 
             console.error('tetris init');
 
@@ -82,11 +86,10 @@
             self.showFigure();
         },
         initListeners: function () {
-            var self = this;
+            var self = this,
+                direction = '';
 
             document.addEventListener('keydown', function(e) {
-                var direction = '';
-
                 switch (e.keyCode) {
                     case 37:
                         direction = 'left';
@@ -99,42 +102,148 @@
                         break;
                 }
 
-                self.changeDirection(direction);
+                self.moveFigure(direction);
             });
         },
-        changeDirection: function (direction) {
-            var self = this,
-                coordinatesShift = 0;
+        moveFigure: function (direction) {
+            var self = this;
+            var coordinatesShift = 0;
+            var currentCoord = [];
 
-            //self.clearField();
-            self.clear();
+            function riba() {
+                for (var i = 0; i < self.figureCoordinates.length; i++) {
+                    currentCoord.push(self.figureCoordinates[i] + coordinatesShift);
+                }
+            }
+
+            function foo() {
+                self.clear(currentCoord, coordinatesShift);
+
+                currentCoord.forEach(function(point) {
+                    self.activateCell('g' + point);
+                    self.figureCoordinates = [];
+                    self.figureCoordinates = currentCoord;
+                });
+            }
 
             switch (direction) {
                 case 'left':
                     coordinatesShift = -1;
+                    riba();
+                    if (!self.isNextCellActive(currentCoord) && self.isLeftSideCellExist(currentCoord)) {
+                        foo();
+                    }
                     break;
                 case 'right':
                     coordinatesShift = 1;
+                    riba();
+                    if (!self.isNextCellActive(currentCoord) && self.isRightSideCellExist(currentCoord)) {
+                        foo();
+                    }
                     break;
                 case 'down':
                     coordinatesShift = self.verticalSize;
+                    riba();
+                    if (!self.isNextCellActive(currentCoord) && self.isNextCellExist(currentCoord)) {
+                        foo();
+                    }
+                    else {
+                        self.showNextFigure();
+                    }
                     break;
             }
+        },
+        isNextCellActive: function(currentCoord) {
+            var self = this,
+                result = false,
+                index = currentCoord.length;
 
-            self.figureCoordinates = self.figureCoordinates.map(function(point) {
-                return point + coordinatesShift;
-            });
+            while (index--) {
+                if (self.activeCoordinates.indexOf(currentCoord[index]) !== -1) {
+                    result = true;
+                    break;
+                }
+            }
 
-            self.figureCoordinates.forEach(function(point) {
-                self.activateCell('g' + point);
+            return result;
+        },
+        isLeftSideCellExist: function (currentCoord) {
+            var self = this,
+                result = true,
+                index = currentCoord.length;
+
+            while (index--) {
+                var position = currentCoord[index] % self.verticalSize;
+                var leftMax = currentCoord[index] - position;
+
+                if (currentCoord[index] <= leftMax) {
+                    result = false;
+                    break;
+                }
+            }
+
+            return result;
+        },
+        isRightSideCellExist: function (currentCoord) {
+            var self = this,
+                result = true,
+                index = currentCoord.length;
+
+            while (index--) {
+                var position = currentCoord[index] % self.verticalSize;
+                var rightMax = currentCoord[index] + self.verticalSize - position - 1;
+
+                if ( currentCoord[index] >= rightMax) {
+                    result = false;
+                    break;
+                }
+            }
+
+            return result;
+        },
+        isNextCellExist: function (currentCoord) {
+            var self = this,
+                result = true,
+                downMax = self.maxCoordinate,
+                index = currentCoord.length;
+
+            while (index--) {
+
+                if (currentCoord[index] > downMax) {
+                    result = false;
+                    break;
+                }
+            }
+
+            return result;
+        },
+        clear: function(coordinates, coordinatesShift) {
+            var self = this;
+
+            coordinates.forEach(function(point) {
+                var cell = document.getElementsByClassName('g' + (point - coordinatesShift))[0];
+
+                if (typeof cell !== 'undefined') {
+                    cell.className = cell.className.replace(/\bactive\b/, '');
+                }
             });
         },
         showFigure: function () {
             var self = this,
                 figure = self.generateFigure();
 
-            self.drawFigure(figure);
-            self.moveFigure();
+            self.generateCoordinates(figure);
+            self.drawFigure();
+            self.moveInterval = setInterval(function() {
+                self.moveFigure('down');
+            }, 1000);
+        },
+        drawFigure: function () {
+            var self = this;
+
+            self.figureCoordinates.forEach(function(point) {
+                self.activateCell('g' + point);
+            });
         },
         generateField: function (vSize, hSize) {
             var verticalSize = vSize || this.verticalSize,
@@ -156,7 +265,7 @@
             tetris.appendChild(field);
             document.body.appendChild(tetris);
         },
-        drawFigure: function (type) {
+        generateCoordinates: function (type) {
             var self = this,
                 coordinates = [];
 
@@ -176,47 +285,18 @@
             }
 
             self.figureCoordinates = coordinates;
-            self.figureCoordinates.forEach(function(point) {
-                self.activateCell('g' + point);
-            })
         },
-        moveFigure: function () {
+        showNextFigure: function () {
             var self = this;
 
-            var moveInterval = setInterval(function() {
-                self.changeDirection('down');
-
-                var maxCoordinate = self.verticalSize * self.horizontalSize,
-                    lastCoordinate = self.figureCoordinates[self.figureCoordinates.length -1];
-
-                /*self.figureCoordinates.forEach(function(point) {
-                    var nextPoint = document.getElementsByClassName('g' + (point + self.verticalSize))[0];
-                    var nextPointClasses = nextPoint ? nextPoint.className : '';
-
-                    console.log(nextPointClasses.indexOf('active'));
-
-                    if (nextPointClasses.indexOf('active') !== -1) {
-                        clearInterval(moveInterval);
-                        self.figureCoordinates = [];
-                        self.showFigure();
-                    }
-                });*/
-
-                if ((lastCoordinate + self.verticalSize > maxCoordinate)) {
-                    clearInterval(moveInterval);
-                    self.figureCoordinates = [];
-                    self.showFigure();
-                }
-            }, 1000);
-        },
-        clear: function() {
-            var self = this;
+            clearInterval(self.moveInterval);
 
             self.figureCoordinates.forEach(function(point) {
-                var cell = document.getElementsByClassName('g' + point)[0];
-
-                cell.className = cell.className.replace(/\bactive\b/, '');
+                self.activeCoordinates.push(point);
             });
+
+            self.figureCoordinates = [];
+            self.showFigure();
         },
         clearField: function () {
             var cells = document.getElementsByClassName('horizontal'),
@@ -227,10 +307,13 @@
             });
         },
         activateCell: function (className) {
-            var cell = document.getElementsByClassName(className)[0],
-                currentClassNames = cell.className;
+            var cell = document.getElementsByClassName(className)[0];
 
-            cell.className = currentClassNames + ' active';
+            if (typeof cell !== 'undefined') {
+                var currentClassNames = cell.className;
+
+                cell.className = currentClassNames + ' active';
+            }
         },
         generateFigure: function () {
             var figure = null,
