@@ -131,14 +131,14 @@
                 case 'left':
                     coordinatesShift = -1;
                     riba();
-                    if (!self.isNextCellActive(nextCoordinates) && self.isLeftSideCellExist(nextCoordinates)) {
+                    if (!self.isNextCellActive(nextCoordinates) && self.isLeftSideCellExist(self.figureCoordinates)) {
                         foo();
                     }
                     break;
                 case 'right':
                     coordinatesShift = 1;
                     riba();
-                    if (!self.isNextCellActive(nextCoordinates) && self.isRightSideCellExist(nextCoordinates)) {
+                    if (!self.isNextCellActive(nextCoordinates) && self.isRightSideCellExist(self.figureCoordinates)) {
                         foo();
                     }
                     break;
@@ -149,9 +149,55 @@
                         foo();
                     }
                     else {
+                        self.saveActiveCoordinates();
+                        self.resetLevel();
                         self.showNextFigure();
                     }
                     break;
+            }
+        },
+        saveActiveCoordinates: function () {
+            var self = this;
+
+            self.figureCoordinates.forEach(function(point) {
+                self.activeCoordinates.push(point);
+            });
+        },
+        sortActiveCoordinates: function () {
+            var self = this;
+
+            return self.activeCoordinates.sort(function(el, nexEl) {
+                return nexEl - el;
+            });
+        },
+        resetLevel: function () {
+            var self = this;
+
+            if (self.activeCoordinates.length >= self.verticalSize) {
+                var sortedArr = self.sortActiveCoordinates();
+
+                var copyActiveCoordinates = sortedArr.slice();
+
+                while (copyActiveCoordinates.length) {
+                    var slice = copyActiveCoordinates.splice(0, self.verticalSize);
+                    var maxVal = Math.max.apply({}, slice);
+                    var minVal = Math.min.apply({}, slice);
+
+                    console.log('slice', slice);
+                    console.log('maxVal', maxVal);
+                    console.log('minVal', minVal);
+
+                    if ((maxVal - minVal) === (self.verticalSize - 1)) {
+                        self.clear(slice);
+
+                        var tempArr = self.activeCoordinates.filter(function(el) {
+                            return slice.indexOf(el) < 0;
+                        });
+
+                        self.activeCoordinates = [];
+                        self.activeCoordinates = tempArr.slice();
+                    }
+                }
             }
         },
         isNextCellActive: function(nextCoordinates) {
@@ -168,37 +214,37 @@
 
             return result;
         },
-        isLeftSideCellExist: function (nextCoordinates) {
+        isLeftSideCellExist: function () {
             var self = this,
                 result = true,
-                index = nextCoordinates.length;
+                index = self.figureCoordinates.length;
 
             while (index--) {
-                var position = nextCoordinates[index] % self.verticalSize;
-                var leftMax = nextCoordinates[index] - position;
+                var position = self.figureCoordinates[index] % self.verticalSize;
+                var leftMax = self.figureCoordinates[index] - position;
 
-                console.log('leftMax', leftMax);
-                console.log('nextCoordinates[index]', nextCoordinates[index]);
+                //console.log('leftMax', leftMax);
+                //console.log('nextCoordinates[index]', self.figureCoordinates[index]);
 
-                if (nextCoordinates[index] <= leftMax) {
+                if (self.figureCoordinates[index] === leftMax) {
                     result = false;
                     break;
                 }
             }
-            console.error('=======');
+            //console.error('=======');
 
             return result;
         },
-        isRightSideCellExist: function (nextCoordinates) {
+        isRightSideCellExist: function () {
             var self = this,
                 result = true,
-                index = nextCoordinates.length;
+                index = self.figureCoordinates.length;
 
             while (index--) {
-                var position = nextCoordinates[index] % self.verticalSize;
-                var rightMax = nextCoordinates[index] + self.verticalSize - position - 1;
+                var position = self.figureCoordinates[index] % self.verticalSize;
+                var rightMax = self.figureCoordinates[index] + self.verticalSize - position - 1;
 
-                if (nextCoordinates[index] >= rightMax) {
+                if (self.figureCoordinates[index] >= rightMax) {
                     result = false;
                     break;
                 }
@@ -221,10 +267,11 @@
 
             return result;
         },
-        clear: function() {
-            var self = this;
+        clear: function(coordinates) {
+            var self = this,
+                coordinatesForReset = coordinates || self.figureCoordinates;
 
-            self.figureCoordinates.forEach(function(point) {
+            coordinatesForReset.forEach(function(point) {
                 var cell = document.getElementsByClassName('g' + point)[0];
 
                 if (typeof cell !== 'undefined') {
@@ -240,7 +287,7 @@
             self.drawFigure();
             self.moveInterval = setInterval(function() {
                 self.moveFigure('down');
-            }, 1000);
+            }, 300);
         },
         drawFigure: function () {
             var self = this;
@@ -294,10 +341,6 @@
             var self = this;
 
             clearInterval(self.moveInterval);
-
-            self.figureCoordinates.forEach(function(point) {
-                self.activeCoordinates.push(point);
-            });
 
             self.figureCoordinates = [];
             self.showFigure();
