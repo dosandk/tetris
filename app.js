@@ -167,7 +167,30 @@
             var self = this;
 
             return self.activeCoordinates.sort(function(el, nexEl) {
-                return nexEl - el;
+                return el - nexEl;
+            });
+        },
+        findSplicePoints: function () {
+            var self = this;
+            var levelsIntervals = {};
+            var maxLevel = self.horizontalSize;
+
+            var riba = [];
+
+            for (var i = 0; i < maxLevel; i++) {
+                var level = i + 1;
+
+                levelsIntervals['level-' + level] = [];
+                var min = self.verticalSize*(level - 1);
+                var max = (level * self.verticalSize) - 1;
+                levelsIntervals['level-' + level].push(min);
+                levelsIntervals['level-' + level].push(max);
+
+                riba.push(min);
+            }
+
+            return riba.sort(function(el, nexEl) {
+                return el - nexEl;
             });
         },
         resetLevel: function () {
@@ -175,27 +198,42 @@
 
             if (self.activeCoordinates.length >= self.verticalSize) {
                 var sortedArr = self.sortActiveCoordinates();
-
+                var splicePoints = self.findSplicePoints();
                 var copyActiveCoordinates = sortedArr.slice();
 
-                while (copyActiveCoordinates.length) {
-                    var slice = copyActiveCoordinates.splice(0, self.verticalSize);
-                    var maxVal = Math.max.apply({}, slice);
-                    var minVal = Math.min.apply({}, slice);
+                var splicePoint = null;
 
-                    console.log('slice', slice);
-                    console.log('maxVal', maxVal);
-                    console.log('minVal', minVal);
+                for (var i = 0; i < splicePoints.length; i++) {
+                    console.log(splicePoints[i]);
+                    if (sortedArr.indexOf(splicePoints[i]) !== -1) {
+                        splicePoint = sortedArr.indexOf(splicePoints[i]);
+                        break;
+                    }
+                }
 
-                    if ((maxVal - minVal) === (self.verticalSize - 1)) {
-                        self.clear(slice);
+                console.log('sortedArr', sortedArr);
+                console.log('splicePoint', splicePoint);
 
-                        var tempArr = self.activeCoordinates.filter(function(el) {
-                            return slice.indexOf(el) < 0;
-                        });
+                if (splicePoint !== null) {
+                    while (copyActiveCoordinates.length) {
+                        var slice = copyActiveCoordinates.splice(splicePoint, self.verticalSize);
+                        var maxVal = Math.max.apply({}, slice);
+                        var minVal = Math.min.apply({}, slice);
 
-                        self.activeCoordinates = [];
-                        self.activeCoordinates = tempArr.slice();
+                        //console.log('slice', slice);
+                        //console.log('maxVal', maxVal);
+                        //console.log('minVal', minVal);
+
+                        if ((maxVal - minVal) === (self.verticalSize - 1)) {
+                            self.clear(slice);
+
+                            var tempArr = self.activeCoordinates.filter(function(el) {
+                                return slice.indexOf(el) < 0;
+                            });
+
+                            self.activeCoordinates = [];
+                            self.activeCoordinates = tempArr.slice();
+                        }
                     }
                 }
             }
