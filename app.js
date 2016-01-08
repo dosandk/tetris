@@ -52,6 +52,8 @@
                 var cellClassName = cellUniqueClassNameGenerator();
 
                 element = createElement();
+                element.appendChild(document.createTextNode(cellClassName.slice(1)));
+
                 addClass(element, cellClassName + 'display-table-cell horizontal');
                 break;
             case 'field':
@@ -73,6 +75,7 @@
         maxCoordinate: 0,
         activeCoordinates: [],
         figureCoordinates: [],
+        debugMode: true,
         initialize: function () {
             var self = this;
 
@@ -80,13 +83,29 @@
 
             console.error('tetris init');
 
-            self.initListeners();
             self.generateField(self.verticalSize, self.horizontalSize);
+            self.initListeners();
             self.clearField();
-            self.showFigure();
+
+            if (!self.debugMode) {
+                self.showFigure();
+            }
         },
         initListeners: function () {
             var self = this;
+
+            var field = document.getElementsByClassName('field')[0];
+
+            field.addEventListener('click', function(e) {
+                var elementClassList = e.target.className;
+                var point = parseInt(e.target.classList[0].slice(1), 10);
+
+                e.target.className = elementClassList + ' active';
+
+                self.activeCoordinates.push(point);
+
+                self.resetLevel();
+            });
 
             document.addEventListener('keydown', function(e) {
                 var direction = '';
@@ -204,27 +223,38 @@
                 var splicePoint = null;
 
                 for (var i = 0; i < splicePoints.length; i++) {
-                    console.log(splicePoints[i]);
                     if (sortedArr.indexOf(splicePoints[i]) !== -1) {
                         splicePoint = sortedArr.indexOf(splicePoints[i]);
                         break;
                     }
                 }
 
-                console.log('sortedArr', sortedArr);
-                console.log('splicePoint', splicePoint);
-
                 if (splicePoint !== null) {
-                    while (copyActiveCoordinates.length) {
+                    while (copyActiveCoordinates.length >= self.verticalSize) {
                         var slice = copyActiveCoordinates.splice(splicePoint, self.verticalSize);
-                        var maxVal = Math.max.apply({}, slice);
-                        var minVal = Math.min.apply({}, slice);
 
-                        //console.log('slice', slice);
-                        //console.log('maxVal', maxVal);
-                        //console.log('minVal', minVal);
+                        function isOneLevel() {
+                            var result = true;
 
-                        if ((maxVal - minVal) === (self.verticalSize - 1)) {
+                            for (var j = 0; j < slice.length; j++) {
+                                var currentEl = slice[j];
+                                var nextEl = slice[j + 1];
+
+                                if (typeof nextEl !== 'undefined') {
+                                    if (nextEl - currentEl !== 1) {
+                                        result = false;
+                                        break;
+                                    }
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+
+                            return result;
+                        }
+
+                        if (isOneLevel()) {
                             self.clear(slice);
 
                             var tempArr = self.activeCoordinates.filter(function(el) {
