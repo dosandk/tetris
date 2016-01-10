@@ -1,7 +1,7 @@
 var $ = function(slector) {
-    var firstChar = slector.charAt(0);
-    var preparedSelector = slector.substr(1);
-    var elem;
+    var firstChar = slector.charAt(0),
+        preparedSelector = slector.substr(1),
+        elem;
 
     switch (firstChar) {
         case '#':
@@ -18,35 +18,38 @@ var $ = function(slector) {
             break;
     }
 
+    var handleApi = {
+        add: function(elem, className) {
+            elem.className += ' ' + className;
+        },
+        remove: function(elem, className) {
+            elem.className = elem.className.replace(new RegExp('\\b' + className + '\\b'), '');
+        }
+    };
+
     return {
         0: elem,
-        addClass: function(className) {
-            if (this[0].length) {
-                var currentElements = Array.prototype.slice.call(this[0]);
+        handleElements: function (methodName, className) {
+            var selectedElements = this[0];
 
-                currentElements.forEach(function(elem) {
-                    elem.className += ' ' + className + ' ';
+            if (selectedElements.length) {
+                var selectedElementsArr = Array.prototype.slice.call(selectedElements);
+
+                selectedElementsArr.forEach(function(elem) {
+                    handleApi[methodName](elem, className);
                 })
             }
             else {
-                this[0].className += ' ' + className + ' ';
+                handleApi[methodName](selectedElements, className);
             }
 
-            return this[0];
+            return selectedElements;
+        },
+        addClass: function(className) {
+            this.handleElements('add', className);
         },
         removeClass: function(className) {
-            if (this[0].length) {
-                var currentElements = Array.prototype.slice.call(this[0]);
-
-                currentElements.forEach(function(elem) {
-                    elem.className = elem.className.replace(new RegExp('\\b' + className + '\\b'),'');
-                })
-            }
-            else {
-                this[0].className = this[0].className.replace(new RegExp('\\b' + className + '\\b'),'');
-            }
-
-            return this[0];
+            this.handleElements('remove', className);
         }
     }
 };
